@@ -30,7 +30,6 @@
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
     /* 🧩 Adiciona isso pra silenciar o aviso */
-    "ignoreDeprecations": "6.0",
     "plugins": [
       {
         "name": "next"
