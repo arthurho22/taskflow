@@ -2,68 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
+/* theme variables (light + dark) */
+:root{
+  --bg-from: 240 100% 99%;
+  --bg-via: 210 96% 98%;
+  --bg-to: 230 98% 99%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 47.4% 11.2%;
+
+  --border: 214.3 31.8% 91.4%;
+  --radius: 1rem;
+}
+
+.dark{
+  --bg-from: 222.2 47.4% 11.2%;
+  --bg-via: 220 40% 7%;
+  --bg-to: 210 34% 6%;
+  --card: 222.2 47.4% 11.2%;
+  --card-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+}
+
+/* base app styles */
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --ring: 215 20.2% 65.1%;
-
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 40% 98%;
-    --popover: 224 71% 4%;
-    --popover-foreground: 215 20.2% 65.1%;
-    --card: 224 71% 4%;
-    --card-foreground: 213 31% 91%;
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 1.2%;
-    --secondary: 222.2 47.4% 11.2%;
-    --secondary-foreground: 210 40% 98%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --ring: 216 34% 17%;
+  html,body,#root { height:100%; }
+  body {
+    background: linear-gradient(180deg,
+      hsl(var(--bg-from)) 0%,
+      hsl(var(--bg-via)) 40%,
+      hsl(var(--bg-to)) 100%);
+    color: hsl(var(--card-foreground));
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
+/* small utility */
+@layer components {
+  .surface {
+    @apply bg-white/90 dark:bg-gray-800/90 rounded-2xl p-6 shadow-lg border border-white/20 dark:border-gray-700/20;
   }
-  body {
-    @apply bg-background text-foreground;
+
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:scale-[1.02] transition;
   }
 }

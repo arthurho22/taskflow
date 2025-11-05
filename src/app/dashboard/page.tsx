@@ -1,213 +1,164 @@
 'use client'
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { onAuthStateChanged } from "firebase/auth"
-import { auth } from "@/lib/firebase"
-import Link from "next/link"
+import React, { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
+import Surface from '@/components/surface'
 import {
-  Plus,
-  ListTodo,
-  Clock,
-  CheckCircle2,
-  AlertTriangle,
-  TrendingUp,
-  Calendar,
-  Target,
-  Zap,
-  Sparkles,
-} from "lucide-react"
-import { useAuth } from "@/hooks/useAuth"
-import { TaskService } from "@/services/taskService"
+  Plus, ListTodo, Clock, CheckCircle2, AlertTriangle, TrendingUp, Calendar as CalIcon, Zap, Sparkles
+} from 'lucide-react'
+import { TaskService } from '@/services/taskService'
 
 export default function DashboardPage() {
-  const router = useRouter() // <— Faltava isso!
+  const router = useRouter()
   const { user } = useAuth()
-  const [stats, setStats] = useState({
-    total: 0,
-    pending: 0,
-    completed: 0,
-    overdue: 0,
-    completedThisWeek: 0,
-  })
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [stats, setStats] = useState({ total:0, pending:0, completed:0, overdue:0, completedThisWeek:0 })
 
-  // 🔐 Redireciona pro login se não estiver autenticado
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) router.push("/login")
-    })
-    return () => unsubscribe()
-  }, [router])
-
-  const loadStats = async () => {
-    try {
-      setError(null)
-      if (!user) throw new Error("Usuário não disponível")
-
-      const userStats = await TaskService.getUserStats(user.uid)
-      setStats(userStats)
-    } catch (error) {
-      console.error("Erro ao carregar stats:", error)
-      setError(error instanceof Error ? error.message : "Erro desconhecido")
-      // fallback
-      setStats({
-        total: 12,
-        pending: 4,
-        completed: 6,
-        overdue: 2,
-        completedThisWeek: 3,
-      })
-    } finally {
-      setLoading(false)
+    if (!user) {
+      // protegido: se não tiver user, manda ao login
+      router.push('/login')
+      return
     }
-  }
-
-  useEffect(() => {
-    loadStats()
-  }, [user])
+    async function load() {
+      try {
+        if (!user) throw new Error('User is null');
+        const userStats = await TaskService.getUserStats(user.uid)
+        setStats(userStats)
+      } catch {
+        setStats({ total: 12, pending: 4, completed:6, overdue:2, completedThisWeek:3 })
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [user, router])
 
   const progress = Math.round((stats.completed / (stats.total || 1)) * 100)
   const weeklyProgress = Math.round((stats.completedThisWeek / (stats.total || 1)) * 100)
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-950 dark:to-indigo-900">
-        <div className="relative">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
-          <Sparkles className="absolute top-1/2 left-1/2 w-6 h-6 text-blue-500 transform -translate-x-1/2 -translate-y-1/2" />
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin w-16 h-16 border-b-2 border-blue-600 rounded-full mx-auto relative">
+          <Sparkles className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 text-blue-500" />
         </div>
-        <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">
-          Carregando seu dashboard...
-        </p>
+        <p className="mt-4 text-gray-600">Carregando seu dashboard...</p>
       </div>
-    )
-  }
+    </div>
+  )
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-950 dark:to-indigo-900 p-8">
-      <div className="max-w-7xl mx-auto space-y-10">
-        {/* Header */}
-        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+    <div className="min-h-screen p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-white/80 dark:bg-gray-800/80 rounded-xl shadow-lg">
-                <Target className="w-7 h-7 text-blue-600" />
-              </div>
-              <h1 className="text-4xl lg:text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Dashboard
-              </h1>
-            </div>
-            <p className="text-gray-600 dark:text-gray-400 mt-2 text-lg">
-              Bem-vindo de volta, {user?.displayName || "Usuário"} 👋{" "}
-              {error && "(modo demonstração)"}
-            </p>
+            <h1 className="text-3xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+              Dashboard
+            </h1>
+            <p className="text-sm text-gray-600 mt-1">Visão geral das suas tarefas</p>
           </div>
 
-          <Link
-            href="/dashboard/kanban"
-            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2 hover:scale-105"
-          >
-            <Plus size={20} /> Nova Tarefa
-          </Link>
+          <div className="flex gap-3">
+            <Link href="/dashboard/kanban" className="btn-primary">
+              <Plus /> Nova Tarefa
+            </Link>
+          </div>
         </header>
 
-        {/* Cards de Estatísticas */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            { title: "Total de Tarefas", value: stats.total, icon: ListTodo, color: "blue" },
-            { title: "Pendentes", value: stats.pending, icon: Clock, color: "amber" },
-            { title: "Concluídas", value: stats.completed, icon: CheckCircle2, color: "emerald" },
-            { title: "Atrasadas", value: stats.overdue, icon: AlertTriangle, color: "rose" },
-          ].map((stat, i) => (
-            <div
-              key={i}
-              className={`group relative overflow-hidden rounded-2xl bg-white/90 dark:bg-gray-800/90 p-6 shadow-lg border border-white/20 hover:shadow-2xl hover:-translate-y-1 transition-all`}
-            >
-              <div
-                className={`absolute inset-0 bg-gradient-to-r from-${stat.color}-400/20 to-${stat.color}-600/30 opacity-0 group-hover:opacity-100 blur-xl transition`}
-              />
-              <div className="relative flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">{stat.title}</p>
-                  <p className="text-3xl font-bold mt-2">{stat.value}</p>
-                </div>
-                <div className={`p-3 bg-${stat.color}-100 dark:bg-${stat.color}-900/40 rounded-xl`}>
-                  <stat.icon
-                    className={`w-6 h-6 text-${stat.color}-600 dark:text-${stat.color}-400`}
-                  />
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Surface>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Total de tarefas</p>
+                <p className="text-2xl font-bold mt-2">{stats.total}</p>
+              </div>
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <ListTodo className="w-6 h-6 text-blue-600" />
               </div>
             </div>
-          ))}
-        </section>
+          </Surface>
 
-        {/* Gráficos de Progresso */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {[
-            {
-              title: "Progresso Geral",
-              value: progress,
-              color: "from-blue-500 to-indigo-600",
-              icon: <TrendingUp className="text-blue-600 dark:text-blue-400" />,
-            },
-            {
-              title: "Esta Semana",
-              value: weeklyProgress,
-              color: "from-purple-500 to-pink-600",
-              icon: <Calendar className="text-purple-600 dark:text-purple-400" />,
-            },
-          ].map((prog, i) => (
-            <div
-              key={i}
-              className="relative bg-white/90 dark:bg-gray-800/90 rounded-2xl shadow-lg p-6 border border-white/20 hover:shadow-2xl transition-all"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{prog.title}</h3>
-                <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">{prog.icon}</div>
+          <Surface>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Pendentes</p>
+                <p className="text-2xl font-bold mt-2">{stats.pending}</p>
               </div>
-              <div className="w-full bg-gray-200/70 dark:bg-gray-700/80 rounded-full h-4 overflow-hidden">
-                <div
-                  className={`h-4 rounded-full transition-all duration-1000 bg-gradient-to-r ${prog.color}`}
-                  style={{ width: `${prog.value}%` }}
-                />
+              <div className="p-3 bg-amber-50 rounded-lg">
+                <Clock className="w-6 h-6 text-amber-600" />
               </div>
-              <p className="mt-3 text-right text-sm text-gray-500 dark:text-gray-400 font-medium">
-                {prog.value}% concluído
-              </p>
             </div>
-          ))}
-        </section>
+          </Surface>
 
-        {/* Ações Rápidas */}
-        <section className="relative bg-white/90 dark:bg-gray-800/90 rounded-2xl shadow-lg p-6 border border-white/20 hover:shadow-2xl transition-all">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-gray-800 dark:text-white">Ações Rápidas</h3>
+          <Surface>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Concluídas</p>
+                <p className="text-2xl font-bold mt-2">{stats.completed}</p>
+              </div>
+              <div className="p-3 bg-emerald-50 rounded-lg">
+                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+              </div>
+            </div>
+          </Surface>
+
+          <Surface>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Vencidas</p>
+                <p className="text-2xl font-bold mt-2">{stats.overdue}</p>
+              </div>
+              <div className="p-3 bg-rose-50 rounded-lg">
+                <AlertTriangle className="w-6 h-6 text-rose-600" />
+              </div>
+            </div>
+          </Surface>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Surface>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Progresso Geral</h3>
+              <div className="text-sm text-gray-500">{progress}%</div>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+              <div className="h-3 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all" style={{ width: `${progress}%` }} />
+            </div>
+          </Surface>
+
+          <Surface>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Esta Semana</h3>
+              <div className="text-sm text-gray-500">{weeklyProgress}%</div>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+              <div className="h-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 transition-all" style={{ width: `${weeklyProgress}%` }} />
+            </div>
+          </Surface>
+        </div>
+
+        <Surface>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold">Ações Rápidas</h3>
             <Zap className="w-5 h-5 text-blue-600" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { href: "/dashboard/kanban", label: "Ver Kanban", color: "blue", icon: ListTodo },
-              { href: "/dashboard/calendar", label: "Calendário", color: "purple", icon: Calendar },
-              { href: "/dashboard/tasks", label: "Lista de Tarefas", color: "green", icon: CheckCircle2 },
-            ].map((btn, i) => (
-              <Link
-                key={i}
-                href={btn.href}
-                className={`p-5 rounded-xl flex items-center gap-3 bg-${btn.color}-50 dark:bg-${btn.color}-900/30 hover:bg-${btn.color}-100 dark:hover:bg-${btn.color}-900/50 transition-all shadow-md hover:shadow-xl hover:scale-105`}
-              >
-                <div className={`p-2 bg-${btn.color}-100 dark:bg-${btn.color}-800 rounded-lg`}>
-                  <btn.icon className={`w-5 h-5 text-${btn.color}-600 dark:text-${btn.color}-400`} />
-                </div>
-                <span className={`font-medium text-${btn.color}-700 dark:text-${btn.color}-300`}>
-                  {btn.label}
-                </span>
-              </Link>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Link href="/dashboard/kanban" className="p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition flex items-center gap-3">
+              <ListTodo className="w-5 h-5 text-blue-600" /><span>Ver Kanban</span>
+            </Link>
+            <Link href="/dashboard/calendar" className="p-4 rounded-lg bg-purple-50 hover:bg-purple-100 transition flex items-center gap-3">
+              <CalIcon className="w-5 h-5 text-purple-600"/><span>Calendário</span>
+            </Link>
+            <Link href="/dashboard/tasks" className="p-4 rounded-lg bg-green-50 hover:bg-green-100 transition flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-green-600"/><span>Lista de Tarefas</span>
+            </Link>
           </div>
-        </section>
+        </Surface>
+
       </div>
     </div>
   )
