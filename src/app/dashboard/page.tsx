@@ -1,7 +1,10 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { onAuthStateChanged } from "firebase/auth"
+import { auth } from "@/lib/firebase"
+import Link from "next/link"
 import {
   Plus,
   ListTodo,
@@ -13,11 +16,12 @@ import {
   Target,
   Zap,
   Sparkles,
-} from 'lucide-react'
-import { useAuth } from '@/hooks/useAuth'
-import { TaskService } from '@/services/taskService'
+} from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
+import { TaskService } from "@/services/taskService"
 
 export default function DashboardPage() {
+  const router = useRouter() // <— Faltava isso!
   const { user } = useAuth()
   const [stats, setStats] = useState({
     total: 0,
@@ -29,24 +33,24 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // 🔐 Redireciona pro login se não estiver autenticado
   useEffect(() => {
-    if (user) loadStats()
-    else {
-      setLoading(false)
-      setError('Usuário não autenticado')
-    }
-  }, [user])
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) router.push("/login")
+    })
+    return () => unsubscribe()
+  }, [router])
 
   const loadStats = async () => {
     try {
       setError(null)
-      if (!user) throw new Error('Usuário não disponível')
+      if (!user) throw new Error("Usuário não disponível")
 
       const userStats = await TaskService.getUserStats(user.uid)
       setStats(userStats)
     } catch (error) {
-      console.error('Erro ao carregar stats:', error)
-      setError(error instanceof Error ? error.message : 'Erro desconhecido')
+      console.error("Erro ao carregar stats:", error)
+      setError(error instanceof Error ? error.message : "Erro desconhecido")
       // fallback
       setStats({
         total: 12,
@@ -60,6 +64,10 @@ export default function DashboardPage() {
     }
   }
 
+  useEffect(() => {
+    loadStats()
+  }, [user])
+
   const progress = Math.round((stats.completed / (stats.total || 1)) * 100)
   const weeklyProgress = Math.round((stats.completedThisWeek / (stats.total || 1)) * 100)
 
@@ -70,7 +78,9 @@ export default function DashboardPage() {
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
           <Sparkles className="absolute top-1/2 left-1/2 w-6 h-6 text-blue-500 transform -translate-x-1/2 -translate-y-1/2" />
         </div>
-        <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">Carregando seu dashboard...</p>
+        <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">
+          Carregando seu dashboard...
+        </p>
       </div>
     )
   }
@@ -78,7 +88,6 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-950 dark:to-indigo-900 p-8">
       <div className="max-w-7xl mx-auto space-y-10">
-
         {/* Header */}
         <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
           <div>
@@ -91,7 +100,8 @@ export default function DashboardPage() {
               </h1>
             </div>
             <p className="text-gray-600 dark:text-gray-400 mt-2 text-lg">
-              Bem-vindo de volta, {user?.displayName || 'Usuário'} 👋 {error && '(modo demonstração)'}
+              Bem-vindo de volta, {user?.displayName || "Usuário"} 👋{" "}
+              {error && "(modo demonstração)"}
             </p>
           </div>
 
@@ -106,23 +116,27 @@ export default function DashboardPage() {
         {/* Cards de Estatísticas */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { title: 'Total de Tarefas', value: stats.total, icon: ListTodo, color: 'blue' },
-            { title: 'Pendentes', value: stats.pending, icon: Clock, color: 'amber' },
-            { title: 'Concluídas', value: stats.completed, icon: CheckCircle2, color: 'emerald' },
-            { title: 'Atrasadas', value: stats.overdue, icon: AlertTriangle, color: 'rose' },
+            { title: "Total de Tarefas", value: stats.total, icon: ListTodo, color: "blue" },
+            { title: "Pendentes", value: stats.pending, icon: Clock, color: "amber" },
+            { title: "Concluídas", value: stats.completed, icon: CheckCircle2, color: "emerald" },
+            { title: "Atrasadas", value: stats.overdue, icon: AlertTriangle, color: "rose" },
           ].map((stat, i) => (
             <div
               key={i}
               className={`group relative overflow-hidden rounded-2xl bg-white/90 dark:bg-gray-800/90 p-6 shadow-lg border border-white/20 hover:shadow-2xl hover:-translate-y-1 transition-all`}
             >
-              <div className={`absolute inset-0 bg-gradient-to-r from-${stat.color}-400/20 to-${stat.color}-600/30 opacity-0 group-hover:opacity-100 blur-xl transition`} />
+              <div
+                className={`absolute inset-0 bg-gradient-to-r from-${stat.color}-400/20 to-${stat.color}-600/30 opacity-0 group-hover:opacity-100 blur-xl transition`}
+              />
               <div className="relative flex items-center justify-between">
                 <div>
                   <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">{stat.title}</p>
                   <p className="text-3xl font-bold mt-2">{stat.value}</p>
                 </div>
                 <div className={`p-3 bg-${stat.color}-100 dark:bg-${stat.color}-900/40 rounded-xl`}>
-                  <stat.icon className={`w-6 h-6 text-${stat.color}-600 dark:text-${stat.color}-400`} />
+                  <stat.icon
+                    className={`w-6 h-6 text-${stat.color}-600 dark:text-${stat.color}-400`}
+                  />
                 </div>
               </div>
             </div>
@@ -131,17 +145,20 @@ export default function DashboardPage() {
 
         {/* Gráficos de Progresso */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {[{
-            title: 'Progresso Geral',
-            value: progress,
-            color: 'from-blue-500 to-indigo-600',
-            icon: <TrendingUp className="text-blue-600 dark:text-blue-400" />,
-          }, {
-            title: 'Esta Semana',
-            value: weeklyProgress,
-            color: 'from-purple-500 to-pink-600',
-            icon: <Calendar className="text-purple-600 dark:text-purple-400" />,
-          }].map((prog, i) => (
+          {[
+            {
+              title: "Progresso Geral",
+              value: progress,
+              color: "from-blue-500 to-indigo-600",
+              icon: <TrendingUp className="text-blue-600 dark:text-blue-400" />,
+            },
+            {
+              title: "Esta Semana",
+              value: weeklyProgress,
+              color: "from-purple-500 to-pink-600",
+              icon: <Calendar className="text-purple-600 dark:text-purple-400" />,
+            },
+          ].map((prog, i) => (
             <div
               key={i}
               className="relative bg-white/90 dark:bg-gray-800/90 rounded-2xl shadow-lg p-6 border border-white/20 hover:shadow-2xl transition-all"
@@ -156,7 +173,9 @@ export default function DashboardPage() {
                   style={{ width: `${prog.value}%` }}
                 />
               </div>
-              <p className="mt-3 text-right text-sm text-gray-500 dark:text-gray-400 font-medium">{prog.value}% concluído</p>
+              <p className="mt-3 text-right text-sm text-gray-500 dark:text-gray-400 font-medium">
+                {prog.value}% concluído
+              </p>
             </div>
           ))}
         </section>
@@ -170,9 +189,9 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { href: '/dashboard/kanban', label: 'Ver Kanban', color: 'blue', icon: ListTodo },
-              { href: '/dashboard/calendar', label: 'Calendário', color: 'purple', icon: Calendar },
-              { href: '/dashboard/tasks', label: 'Lista de Tarefas', color: 'green', icon: CheckCircle2 },
+              { href: "/dashboard/kanban", label: "Ver Kanban", color: "blue", icon: ListTodo },
+              { href: "/dashboard/calendar", label: "Calendário", color: "purple", icon: Calendar },
+              { href: "/dashboard/tasks", label: "Lista de Tarefas", color: "green", icon: CheckCircle2 },
             ].map((btn, i) => (
               <Link
                 key={i}
@@ -182,7 +201,9 @@ export default function DashboardPage() {
                 <div className={`p-2 bg-${btn.color}-100 dark:bg-${btn.color}-800 rounded-lg`}>
                   <btn.icon className={`w-5 h-5 text-${btn.color}-600 dark:text-${btn.color}-400`} />
                 </div>
-                <span className={`font-medium text-${btn.color}-700 dark:text-${btn.color}-300`}>{btn.label}</span>
+                <span className={`font-medium text-${btn.color}-700 dark:text-${btn.color}-300`}>
+                  {btn.label}
+                </span>
               </Link>
             ))}
           </div>

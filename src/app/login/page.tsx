@@ -1,134 +1,89 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { loginSchema, registerSchema } from '@/schemas/authSchemas'
-import { z } from 'zod'
-import { auth } from '@/lib/firebase'
-import {
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    updateProfile,
-} from 'firebase/auth'
-import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
-
-type LoginData = z.infer<typeof loginSchema>
-type RegisterData = z.infer<typeof registerSchema>
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { signInWithEmailAndPassword } from "firebase/auth"
+import { auth } from "@/lib/firebase"
+import { Loader2 } from "lucide-react"
 
 export default function LoginPage() {
-    const [isRegister, setIsRegister] = useState(false)
-    const router = useRouter()
+  const router = useRouter()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
-    const {
-        register,
-        handleSubmit,
-        reset,
-        formState: { errors, isSubmitting },
-    } = useForm<LoginData | RegisterData>({
-        resolver: zodResolver(isRegister ? registerSchema : loginSchema),
-    })
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
 
-    const onSubmit = async (data: any) => {
-        try {
-            if (isRegister) {
-                // Cadastro de novo usuário
-                const { email, password, name } = data
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-                await updateProfile(userCredential.user, { displayName: name })
-                toast.success('Conta criada com sucesso!')
-            } else {
-                // Login de usuário existente
-                const { email, password } = data
-                await signInWithEmailAndPassword(auth, email, password)
-                toast.success('Login realizado com sucesso!')
-            }
-
-            reset()
-            router.push('/dashboard')
-        } catch (error: any) {
-            console.error(error)
-            const message =
-                error.code === 'auth/email-already-in-use'
-                    ? 'Este e-mail já está em uso.'
-                    : error.code === 'auth/invalid-credential'
-                        ? 'E-mail ou senha incorretos.'
-                        : 'Erro ao autenticar. Tente novamente.'
-            toast.error(message)
-        }
+    try {
+      await signInWithEmailAndPassword(auth, email, password)
+      router.push("/dashboard")
+    } catch (err: any) {
+      setError("E-mail ou senha inválidos.")
+      console.error(err)
+    } finally {
+      setLoading(false)
     }
+  }
 
-    return (
-        <div className="flex flex-col items-center justify-center min-h-[80vh]">
-            <div className="bg-white dark:bg-gray-900 shadow-lg rounded-2xl p-8 w-full max-w-md">
-                <h1 className="text-2xl font-bold mb-4 text-center">
-                    {isRegister ? 'Criar conta' : 'Fazer login'}
-                </h1>
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white">
+      <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md border border-gray-100">
+        <h1 className="text-3xl font-bold text-center text-blue-600 mb-2">
+          TaskFlow
+        </h1>
+        <p className="text-center text-gray-500 mb-8">
+          Faça login para acessar seu painel
+        </p>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    {isRegister && (
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Nome</label>
-                            <input
-                                type="text"
-                                {...register('name' as const)}
-                                className="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:border-gray-700"
-                            />
-                            {'name' in errors && errors.name && (
-                                <p className="text-red-500 text-sm">{String(errors.name.message)}</p>
-                            )}
-                        </div>
-                    )}
+        <form onSubmit={handleLogin} className="space-y-4">
+          <input
+            type="email"
+            placeholder="E-mail"
+            className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Senha"
+            className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
+          {error && (
+            <p className="text-red-500 text-sm text-center">{error}</p>
+          )}
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1">E-mail</label>
-                        <input
-                            type="email"
-                            {...register('email')}
-                            className="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:border-gray-700"
-                        />
-                        {errors.email && (
-                            <p className="text-red-500 text-sm">{String(errors.email.message)}</p>
-                        )}
-                    </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold py-3 rounded-lg hover:opacity-90 transition"
+          >
+            {loading ? (
+              <Loader2 className="animate-spin mx-auto" />
+            ) : (
+              "Entrar"
+            )}
+          </button>
+        </form>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Senha</label>
-                        <input
-                            type="password"
-                            {...register('password')}
-                            className="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:border-gray-700"
-                        />
-                        {errors.password && (
-                            <p className="text-red-500 text-sm">{String(errors.password.message)}</p>
-                        )}
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-md transition"
-                    >
-                        {isSubmitting
-                            ? 'Carregando...'
-                            : isRegister
-                                ? 'Cadastrar'
-                                : 'Entrar'}
-                    </button>
-                </form>
-
-                <p className="text-center text-sm mt-4">
-                    {isRegister ? 'Já tem uma conta?' : 'Ainda não tem conta?'}{' '}
-                    <button
-                        onClick={() => setIsRegister(!isRegister)}
-                        className="text-blue-600 hover:underline font-medium"
-                    >
-                        {isRegister ? 'Entrar' : 'Cadastrar-se'}
-                    </button>
-                </p>
-            </div>
-        </div>
-    )
+        <p className="text-center text-sm text-gray-500 mt-6">
+          Ainda não tem uma conta?{" "}
+          <a
+            href="/register"
+            className="text-blue-600 font-semibold hover:underline"
+          >
+            Cadastre-se
+          </a>
+        </p>
+      </div>
+    </div>
+  )
 }
