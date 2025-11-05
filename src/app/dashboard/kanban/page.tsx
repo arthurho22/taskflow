@@ -57,10 +57,15 @@ export default function KanbanPage() {
 
   // Carregar tarefas do Firebase
   useEffect(() => {
-    if (user) {
-      loadTasks()
-    }
-  }, [user])
+  console.log('Usuário atual:', user)
+  if (user) {
+    loadTasks()
+  } else {
+    setLoading(false)
+    setError('Usuário não autenticado')
+  }
+}, [user])
+
 
   const loadTasks = async () => {
     try {
@@ -450,4 +455,8 @@ export default function KanbanPage() {
       </div>
     </div>
   )
+}
+
+function setError(arg0: string) {
+  throw new Error('Function not implemented.')
 }
