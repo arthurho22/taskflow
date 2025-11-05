@@ -10,7 +10,8 @@ import {
   query, 
   where, 
   orderBy,
-  Timestamp 
+  Timestamp,
+  onSnapshot // ← ADICIONE ESTE IMPORT
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { Task, Subtask, CreateTaskData, TaskStats } from '@/types/task'
@@ -63,6 +64,44 @@ export class TaskService {
     } catch (error) {
       console.error('Erro ao buscar tarefas:', error)
       throw error
+    }
+  }
+
+  // ADICIONE ESTA FUNÇÃO - para o calendário em tempo real
+  static listenTasksByUser(userId: string, callback: (tasks: Task[]) => void): () => void {
+    try {
+      const q = query(
+        collection(db, 'tasks'),
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc')
+      )
+      
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const tasks: Task[] = []
+        querySnapshot.forEach((doc) => {
+          const data = doc.data()
+          tasks.push({
+            id: doc.id,
+            title: data.title || '',
+            description: data.description || '',
+            dueDate: data.dueDate || '',
+            priority: data.priority || 'media',
+            status: data.status || 'pendente',
+            subtasks: data.subtasks || [],
+            userId: data.userId,
+            createdAt: data.createdAt?.toMillis() || Date.now(),
+            updatedAt: data.updatedAt?.toMillis() || Date.now(),
+          })
+        })
+        callback(tasks)
+      }, (error) => {
+        console.error('Erro ao ouvir tarefas:', error)
+      })
+      
+      return unsubscribe
+    } catch (error) {
+      console.error('Erro ao configurar listener:', error)
+      return () => {} // Retorna função vazia em caso de erro
     }
   }
 
@@ -158,7 +197,7 @@ export class TaskService {
     return Math.round((completed / subtasks.length) * 100)
   }
 
-  // Buscar estatísticas do usuário - CORRIGIDA
+  // Buscar estatísticas do usuário
   static async getUserStats(userId: string): Promise<TaskStats> {
     try {
       const tasks = await this.getUserTasks(userId)
