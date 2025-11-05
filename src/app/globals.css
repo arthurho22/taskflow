@@ -2,9 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body {
-  height: 100%;
-  background-color: #f8fafc;
-  color: #0f172a;
-  font-family: 'Inter', sans-serif;
+:root {
+  --primary: #0ea5e9;
+  --secondary: #a855f7;
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Animações suaves */
+.smooth-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
