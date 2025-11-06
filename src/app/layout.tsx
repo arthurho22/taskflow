@@ -3,7 +3,7 @@ import { ThemeProvider } from 'next-themes'
 import Navbar from '@/components/navbar'
 import { ReactNode } from 'react'
 import { Toaster } from 'sonner'
-import { AuthProvider } from '@/providers/AuthProvider' // ← importar
+import { AuthProvider } from '@/hooks/useAuth'
 
 export const metadata = { title: 'TaskFlow' }
 

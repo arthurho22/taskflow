@@ -1,27 +1,41 @@
 'use client'
 
-import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { onAuthStateChanged, User } from 'firebase/auth'
-import { auth } from '@/lib/firebase' // Certifique-se que 'auth' está exportado corretamente
+import { auth } from '@/lib/firebase'
 
-interface AuthContextType {
+type AuthContextType = {
   user: User | null
   loading: boolean
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true })
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+})
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u)
+    // Escuta mudanças de autenticação (login/logout)
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser)
       setLoading(false)
     })
+
     return () => unsubscribe()
   }, [])
+
+  // 🚀 Só renderiza o app depois que o Firebase responder
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-600">Carregando autenticação...</p>
+      </div>
+    )
+  }
 
   return (
     <AuthContext.Provider value={{ user, loading }}>
@@ -30,6 +44,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 }
 
-export function useAuth(): AuthContextType {
-  return useContext(AuthContext)
-}
+export const useAuth = () => useContext(AuthContext)

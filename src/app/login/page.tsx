@@ -14,20 +14,24 @@ export default function LoginPage() {
   const [error, setError] = useState("")
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError("")
+  e.preventDefault()
+  setLoading(true)
+  setError("")
 
-    try {
-      await signInWithEmailAndPassword(auth, email, password)
-      router.push("/dashboard")
-    } catch (err: any) {
-      setError("E-mail ou senha inválidos.")
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password)
+    console.log("✅ Login bem-sucedido:", userCredential.user)
+
+    
+    window.location.href = "/dashboard"
+  } catch (err: any) {
+    console.error("❌ Erro no login:", err)
+    setError("E-mail ou senha inválidos.")
+  } finally {
+    setLoading(false)
   }
+}
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white">
