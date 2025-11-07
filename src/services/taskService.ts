@@ -9,18 +9,12 @@ import {
   where,
   onSnapshot,
   getDocs,
+  serverTimestamp,
 } from 'firebase/firestore'
 
-// 🔹 Tipagem de uma tarefa
-export interface Task {
-  id: string
-  title: string
-  description?: string
-  status: 'todo' | 'in-progress' | 'done' | 'overdue'
-  userId: string
-  createdAt?: Date
-  dueDate?: Date
-}
+// ✅ Correto:
+import type { Task } from '@/types/task'
+
 
 export const TaskService = {
   // 🔹 Estatísticas do usuário
@@ -49,10 +43,31 @@ export const TaskService = {
   },
 
   // 🔹 Criar nova tarefa
-  async createTask(userId: string, taskData: Omit<Task, 'id' | 'userId'>) {
+  // 🔹 Criar nova tarefa
+async createTask(userId: string, task: Omit<Task, 'id' | 'userId' | 'createdAt'>) {
+  const tasksRef = collection(db, 'tasks')
+  await addDoc(tasksRef, {
+    ...task,
+    userId,
+    createdAt: new Date().toISOString(), // string ISO
+    dueDate: task.dueDate || null,       // já é string, sem precisar converter
+  })
+},
+
+  // 🔹 Buscar todas as tarefas do usuário (para o calendário)
+  async getUserTasks(userId: string) {
     const tasksRef = collection(db, 'tasks')
-    await addDoc(tasksRef, { ...taskData, userId, createdAt: new Date() })
+    const q = query(tasksRef, where('userId', '==', userId))
+    const snapshot = await getDocs(q)
+
+    const tasks: Task[] = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...(doc.data() as Omit<Task, 'id'>),
+    }))
+
+    return tasks
   },
+
 
   // 🔹 Atualizar tarefa
   async updateTask(taskId: string, updates: Partial<Task>) {

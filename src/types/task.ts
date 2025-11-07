@@ -9,18 +9,23 @@ export interface Subtask {
 }
 
 // Interface principal Task que estava faltando
-export interface Task {
+export type Task = {
   id: string
-  title: string
-  description: string
-  dueDate: string // ISO string
-  priority: 'baixa' | 'media' | 'alta'
-  status: 'pendente' | 'andamento' | 'concluida'
-  subtasks: Subtask[]
   userId: string
-  createdAt: number
-  updatedAt: number
+  title: string
+  description?: string
+  priority: 'alta' | 'media' | 'baixa'
+  status: 'todo' | 'in-progress' | 'done' | 'overdue'
+  dueDate?: string   // ← ALTERADO: era Date
+  createdAt: string  // ← também string, já que Firestore armazena assim
+  subtasks?: {
+    id: string
+    title: string
+    completed: boolean
+  }[]
 }
+
+
 
 export interface User {
   uid: string
@@ -39,4 +44,4 @@ export interface TaskStats {
 }
 
 // Tipo para criar nova tarefa (sem id e timestamps)
-export type CreateTaskData = Omit<Task, 'id' | 'createdAt' | 'updatedAt'>
+export type CreateTaskData = Omit<Task, 'id' | 'createdAt' | 'userId'>
