@@ -1,81 +1,86 @@
-'use client'
+"use client";
 
-import React, { useEffect, useState } from 'react'
-import { useAuth } from '@/hooks/useAuth'
-import { TaskService } from '@/services/taskService'
-import type { Task } from '@/types/task'
-import { Loader2, ListTodo, Plus } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import React, { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { TaskService } from "@/services/taskService";
+import type { Task } from "@/types/task";
+import { Loader2, ListTodo, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 export default function KanbanPage() {
-  const { user } = useAuth()
-  const router = useRouter()
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showModal, setShowModal] = useState(false)
-  const [newTask, setNewTask] = useState({ title: '', description: '', status: 'todo' })
+  const { user } = useAuth();
+  const router = useRouter();
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [newTask, setNewTask] = useState({
+    title: "",
+    description: "",
+    status: "todo",
+  });
 
   useEffect(() => {
     if (!user) {
-      router.push('/login')
-      return
+      router.push("/login");
+      return;
     }
 
     const unsubscribe = TaskService.listenTasksByUser(user.uid, (userTasks) => {
-      setTasks(userTasks)
-      setLoading(false)
-    })
+      setTasks(userTasks);
+      setLoading(false);
+    });
 
-    return () => unsubscribe()
-  }, [user, router])
+    return () => unsubscribe();
+  }, [user, router]);
 
   const grouped: Record<string, Task[]> = {
-    todo: tasks.filter((t) => t.status === 'todo'),
-    inprogress: tasks.filter((t) => t.status === 'in-progress'),
-    done: tasks.filter((t) => t.status === 'done'),
-    overdue: tasks.filter((t) => t.status === 'overdue'),
-  }
+    todo: tasks.filter((t) => t.status === "todo"),
+    inprogress: tasks.filter((t) => t.status === "in-progress"),
+    done: tasks.filter((t) => t.status === "done"),
+    overdue: tasks.filter((t) => t.status === "overdue"),
+  };
 
   const onDragEnd = async (result: any) => {
-    const { destination, source, draggableId } = result
-    if (!destination) return
+    const { destination, source, draggableId } = result;
+    if (!destination) return;
 
-    const fromCol = source.droppableId
-    const toCol = destination.droppableId
-    if (fromCol === toCol) return
+    const fromCol = source.droppableId;
+    const toCol = destination.droppableId;
+    if (fromCol === toCol) return;
 
     try {
-      await TaskService.updateTask(draggableId, { status: toCol as any })
+      await TaskService.updateTask(draggableId, { status: toCol as any });
     } catch (err) {
-      console.error('Erro ao mover tarefa:', err)
+      console.error("Erro ao mover tarefa:", err);
     }
-  }
+  };
 
   const handleCreateTask = async () => {
-  if (!newTask.title.trim()) return alert('Digite um título para a tarefa.')
-  try {
-    await TaskService.createTask(user!.uid, {
-      title: newTask.title,
-      description: newTask.description,
-      status: newTask.status as any,
-      priority: 'media', // ✅ prioridade padrão
-    })
-    setShowModal(false)
-    setNewTask({ title: '', description: '', status: 'todo' })
-  } catch (err) {
-    console.error('Erro ao criar tarefa:', err)
-  }
-}
-
+    if (!newTask.title.trim()) return alert("Digite um título para a tarefa.");
+    try {
+      await TaskService.createTask(user!.uid, {
+        title: newTask.title,
+        description: newTask.description,
+        status: newTask.status as any,
+        priority: "media", // ✅ prioridade padrão
+      });
+      setShowModal(false);
+      setNewTask({ title: "", description: "", status: "todo" });
+    } catch (err) {
+      console.error("Erro ao criar tarefa:", err);
+    }
+  };
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-950 dark:to-indigo-900">
         <Loader2 className="animate-spin w-12 h-12 text-blue-600" />
-        <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">Carregando seu Kanban...</p>
+        <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">
+          Carregando seu Kanban...
+        </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -102,13 +107,13 @@ export default function KanbanPage() {
         <DragDropContext onDragEnd={onDragEnd}>
           <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { title: 'A Fazer', key: 'todo', color: 'blue' },
-              { title: 'Em Progresso', key: 'in-progress', color: 'amber' },
-              { title: 'Concluídas', key: 'done', color: 'emerald' },
-              { title: 'Atrasadas', key: 'overdue', color: 'rose' },
+              { title: "A Fazer", key: "todo", color: "blue" },
+              { title: "Em Progresso", key: "in-progress", color: "amber" },
+              { title: "Concluídas", key: "done", color: "emerald" },
+              { title: "Atrasadas", key: "overdue", color: "rose" },
             ].map((col) => {
-              const normalizedKey = col.key.replace('-', '')
-              const tasksInColumn = grouped[normalizedKey] || []
+              const normalizedKey = col.key.replace("-", "");
+              const tasksInColumn = grouped[normalizedKey] || [];
 
               return (
                 <Droppable droppableId={col.key} key={col.key}>
@@ -126,8 +131,8 @@ export default function KanbanPage() {
                         </h3>
                         <button
                           onClick={() => {
-                            setNewTask({ ...newTask, status: col.key })
-                            setShowModal(true)
+                            setNewTask({ ...newTask, status: col.key });
+                            setShowModal(true);
                           }}
                           className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                           title="Nova tarefa nesta coluna"
@@ -143,15 +148,45 @@ export default function KanbanPage() {
                           </p>
                         ) : (
                           tasksInColumn.map((task, index) => (
-                            <Draggable draggableId={task.id} index={index} key={task.id}>
+                            <Draggable
+                              draggableId={task.id}
+                              index={index}
+                              key={task.id}
+                            >
                               {(provided) => (
                                 <div
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  className="p-4 bg-white dark:bg-gray-900 rounded-xl border border-gray-200/30 dark:border-gray-700/30 shadow-sm hover:shadow-md transition-all"
+                                  className="p-4 bg-white dark:bg-gray-900 rounded-xl border border-gray-200/30 dark:border-gray-700/30 shadow-sm hover:shadow-md transition-all relative"
                                 >
-                                  <p className="font-medium text-gray-800 dark:text-gray-200">{task.title}</p>
+                                  <button
+                                    onClick={async () => {
+                                      if (
+                                        confirm(
+                                          `Tem certeza que deseja deletar "${task.title}"?`
+                                        )
+                                      ) {
+                                        try {
+                                          await TaskService.deleteTask(task.id);
+                                        } catch (err) {
+                                          console.error(
+                                            "Erro ao deletar tarefa:",
+                                            err
+                                          );
+                                          alert("Erro ao deletar tarefa.");
+                                        }
+                                      }
+                                    }}
+                                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors"
+                                    title="Excluir tarefa"
+                                  >
+                                    🗑️
+                                  </button>
+
+                                  <p className="font-medium text-gray-800 dark:text-gray-200 pr-6">
+                                    {task.title}
+                                  </p>
                                   {task.description && (
                                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
                                       {task.description}
@@ -167,7 +202,7 @@ export default function KanbanPage() {
                     </div>
                   )}
                 </Droppable>
-              )
+              );
             })}
           </section>
         </DragDropContext>
@@ -185,13 +220,17 @@ export default function KanbanPage() {
               type="text"
               placeholder="Título"
               value={newTask.title}
-              onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+              onChange={(e) =>
+                setNewTask({ ...newTask, title: e.target.value })
+              }
               className="w-full mb-3 p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"
             />
             <textarea
               placeholder="Descrição (opcional)"
               value={newTask.description}
-              onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+              onChange={(e) =>
+                setNewTask({ ...newTask, description: e.target.value })
+              }
               className="w-full mb-3 p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"
             />
 
@@ -213,5 +252,5 @@ export default function KanbanPage() {
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -259,6 +259,32 @@ export default function CalendarPage() {
                     {new Date(selectedTask.dueDate).toLocaleDateString("pt-BR")}
                   </Typography>
                 )}
+
+                {/* 🔥 Botões de ação */}
+                <div className="flex justify-end gap-3 mt-4">
+                  <Button onClick={handleCloseModal}>Fechar</Button>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    onClick={async () => {
+                      if (
+                        confirm("Tem certeza que deseja excluir esta tarefa?")
+                      ) {
+                        try {
+                          await TaskService.deleteTask(selectedTask.id);
+                          setTasks(
+                            tasks.filter((t) => t.id !== selectedTask.id)
+                          );
+                          handleCloseModal();
+                        } catch (err) {
+                          console.error("Erro ao excluir tarefa:", err);
+                        }
+                      }
+                    }}
+                  >
+                    Excluir
+                  </Button>
+                </div>
               </div>
             )}
           </Box>

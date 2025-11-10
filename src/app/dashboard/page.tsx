@@ -1,54 +1,77 @@
-'use client'
+"use client";
 
-import React, { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/useAuth'
-import Surface from '@/components/surface'
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import Surface from "@/components/surface";
 import {
-  Plus, ListTodo, Clock, CheckCircle2, AlertTriangle, TrendingUp, Calendar as CalIcon, Zap, Sparkles
-} from 'lucide-react'
-import { TaskService } from '@/services/taskService'
+  Plus,
+  ListTodo,
+  Clock,
+  CheckCircle2,
+  AlertTriangle,
+  TrendingUp,
+  Calendar as CalIcon,
+  Zap,
+  Sparkles,
+  CheckCircle,
+} from "lucide-react";
+import { TaskService } from "@/services/taskService";
 
 export default function DashboardPage() {
-  const router = useRouter()
-  const { user } = useAuth()
-  const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState({ total:0, pending:0, completed:0, overdue:0, completedThisWeek:0 })
+  const router = useRouter();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    completed: 0,
+    overdue: 0,
+    completedThisWeek: 0,
+  });
 
   useEffect(() => {
     if (!user) {
-      // protegido: se não tiver user, manda ao login
-      router.push('/login')
-      return
+      router.push("/login");
+      return;
     }
     async function load() {
       try {
-        if (!user) throw new Error('User is null');
-        const userStats = await TaskService.getUserStats(user.uid)
-        setStats(userStats)
+        if (!user) throw new Error("User is null");
+        const userStats = await TaskService.getUserStats(user.uid);
+        setStats(userStats);
       } catch {
-        setStats({ total: 12, pending: 4, completed:6, overdue:2, completedThisWeek:3 })
+        setStats({
+          total: 12,
+          pending: 4,
+          completed: 6,
+          overdue: 2,
+          completedThisWeek: 3,
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-    load()
-  }, [user, router])
+    load();
+  }, [user, router]);
 
-  const progress = Math.round((stats.completed / (stats.total || 1)) * 100)
-  const weeklyProgress = Math.round((stats.completedThisWeek / (stats.total || 1)) * 100)
+  const progress = Math.round((stats.completed / (stats.total || 1)) * 100);
+  const weeklyProgress = Math.round(
+    (stats.completedThisWeek / (stats.total || 1)) * 100
+  );
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin w-16 h-16 border-b-2 border-blue-600 rounded-full mx-auto relative">
-          <Sparkles className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 text-blue-500" />
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-16 h-16 border-b-2 border-blue-600 rounded-full mx-auto relative">
+            <Sparkles className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 text-blue-500" />
+          </div>
+          <p className="mt-4 text-gray-600">Carregando seu dashboard...</p>
         </div>
-        <p className="mt-4 text-gray-600">Carregando seu dashboard...</p>
       </div>
-    </div>
-  )
+    );
 
   return (
     <div className="min-h-screen p-8">
@@ -58,7 +81,9 @@ export default function DashboardPage() {
             <h1 className="text-3xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
               Dashboard
             </h1>
-            <p className="text-sm text-gray-600 mt-1">Visão geral das suas tarefas</p>
+            <p className="text-sm text-gray-600 mt-1">
+              Visão geral das suas tarefas
+            </p>
           </div>
 
           <div className="flex gap-3">
@@ -125,7 +150,10 @@ export default function DashboardPage() {
               <div className="text-sm text-gray-500">{progress}%</div>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-              <div className="h-3 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all" style={{ width: `${progress}%` }} />
+              <div
+                className="h-3 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all"
+                style={{ width: `${progress}%` }}
+              />
             </div>
           </Surface>
 
@@ -135,31 +163,48 @@ export default function DashboardPage() {
               <div className="text-sm text-gray-500">{weeklyProgress}%</div>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-              <div className="h-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 transition-all" style={{ width: `${weeklyProgress}%` }} />
+              <div
+                className="h-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 transition-all"
+                style={{ width: `${weeklyProgress}%` }}
+              />
             </div>
           </Surface>
         </div>
 
         <Surface>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">Ações Rápidas</h3>
-            <Zap className="w-5 h-5 text-blue-600" />
+            <div className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-blue-600" />
+              <h3 className="font-semibold">Ações Rápidas</h3>
+            </div>
+            
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link href="/dashboard/kanban" className="p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition flex items-center gap-3">
-              <ListTodo className="w-5 h-5 text-blue-600" /><span>Ver Kanban</span>
+            <Link
+              href="/dashboard/kanban"
+              className="p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition flex items-center gap-3"
+            >
+              <ListTodo className="w-5 h-5 text-blue-600" />
+              <span>Ver Kanban</span>
             </Link>
-            <Link href="/dashboard/calendar" className="p-4 rounded-lg bg-purple-50 hover:bg-purple-100 transition flex items-center gap-3">
-              <CalIcon className="w-5 h-5 text-purple-600"/><span>Calendário</span>
+            <Link
+              href="/dashboard/calendar"
+              className="p-4 rounded-lg bg-purple-50 hover:bg-purple-100 transition flex items-center gap-3"
+            >
+              <CalIcon className="w-5 h-5 text-purple-600" />
+              <span>Calendário</span>
             </Link>
-            <Link href="/dashboard/tasks" className="p-4 rounded-lg bg-green-50 hover:bg-green-100 transition flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-green-600"/><span>Lista de Tarefas</span>
+            <Link
+              href="/dashboard/tasks"
+              className="p-4 rounded-lg bg-green-50 hover:bg-green-100 transition flex items-center gap-3"
+            >
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+              <span>Lista de Tarefas</span>
             </Link>
           </div>
         </Surface>
-
       </div>
     </div>
-  )
+  );
 }

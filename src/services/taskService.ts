@@ -43,7 +43,6 @@ export const TaskService = {
   },
 
   // 🔹 Criar nova tarefa
-  // 🔹 Criar nova tarefa
 async createTask(userId: string, task: Omit<Task, 'id' | 'userId' | 'createdAt'>) {
   const tasksRef = collection(db, 'tasks')
   await addDoc(tasksRef, {
