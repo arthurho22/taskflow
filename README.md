@@ -24,32 +24,32 @@ git clone https://github.com/seu-usuario/taskflow.git cd taskflow
 
 
 # 2. Instale as dependências
-npm install
-npm install next
-npm install react
-npm install react-dom
-npm install firebase
-npm install tailwindcss
-npm install autoprefixer
-npm install postcss
-npm install next-themes
-npm install @mui/material
-npm install @emotion/react
-npm install @emotion/styled
-npm install lucide-react
-npm install @fullcalendar/react
-npm install @fullcalendar/daygrid
-npm install @fullcalendar/interaction
-npm install @fullcalendar/core
-npm install @fullcalendar/core/locales/pt-br
-npm install @hello-pangea/dnd
-npm install react-firebase-hooks
-npm install sonner
-npm install -D typescript
-npm install -D eslint
-npm install -D eslint-config-next
-npm install -D @types/react
-npm install -D @types/node
+npm install.
+npm install next.
+npm install react.
+npm install react-dom.
+npm install firebase.
+npm install tailwindcss.
+npm install autoprefixer.
+npm install postcss.
+npm install next-themes.
+npm install @mui/material.
+npm install @emotion/react.
+npm install @emotion/styled.
+npm install lucide-react.
+npm install @fullcalendar/react.
+npm install @fullcalendar/daygrid.
+npm install @fullcalendar/interaction.
+npm install @fullcalendar/core.
+npm install @fullcalendar/core/locales/pt-br.
+npm install @hello-pangea/dnd.
+npm install react-firebase-hooks.
+npm install sonner.
+npm install -D typescript.
+npm install -D eslint.
+npm install -D eslint-config-next.
+npm install -D @types/react.
+npm install -D @types/node.
 
 
 # 3. Configure o Firebase
