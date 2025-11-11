@@ -1,9 +1,23 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+0;
+import {
+  LineChart as ReLineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip as ReTooltip,
+  ResponsiveContainer,
+  BarChart as ReBarChart,
+  Bar,
+} from "recharts";
+import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { Card, Title, LineChart, BarChart } from "@tremor/react";
 import Surface from "@/components/surface";
 import {
   Plus,
@@ -31,30 +45,38 @@ export default function DashboardPage() {
     completedThisWeek: 0,
   });
 
-  useEffect(() => {
-    if (!user) {
-      router.push("/login");
-      return;
+ useEffect(() => {
+  // Se o user ainda não carregou, não faz nada
+  if (user === undefined) return;
+
+  if (!user) {
+    router.replace("/login");
+    return;
+  }
+
+  // Agora TypeScript sabe que user não é null
+  const load = async () => {
+    try {
+      const userStats = await TaskService.getUserStats(user.uid);
+      setStats(userStats);
+    } catch {
+      setStats({
+        total: 12,
+        pending: 4,
+        completed: 6,
+        overdue: 2,
+        completedThisWeek: 3,
+      });
+    } finally {
+      setLoading(false);
     }
-    async function load() {
-      try {
-        if (!user) throw new Error("User is null");
-        const userStats = await TaskService.getUserStats(user.uid);
-        setStats(userStats);
-      } catch {
-        setStats({
-          total: 12,
-          pending: 4,
-          completed: 6,
-          overdue: 2,
-          completedThisWeek: 3,
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [user, router]);
+  };
+
+  load();
+}, [user, router]);
+
+
+
 
   const progress = Math.round((stats.completed / (stats.total || 1)) * 100);
   const weeklyProgress = Math.round(
@@ -92,7 +114,6 @@ export default function DashboardPage() {
             </Link>
           </div>
         </header>
-
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Surface>
             <div className="flex items-center justify-between">
@@ -142,7 +163,6 @@ export default function DashboardPage() {
             </div>
           </Surface>
         </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Surface>
             <div className="flex items-center justify-between mb-4">
@@ -171,13 +191,98 @@ export default function DashboardPage() {
           </Surface>
         </div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          {/* Gráfico 1 - Vendas Mensais (Linha Roxa Animada) */}
+          <Surface className="bg-gradient-to-r from-purple-50 to-purple-100 p-6 rounded-lg">
+            <Title className="text-purple-800 mb-2">Vendas Mensais</Title>
+            <ResponsiveContainer width="100%" height={320}>
+              <ReLineChart
+                data={[
+                  { month: "Jan", vendas: 50 },
+                  { month: "Feb", vendas: 80 },
+                  { month: "Mar", vendas: 45 },
+                  { month: "Apr", vendas: 70 },
+                ]}
+                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <ReTooltip
+                  contentStyle={{ backgroundColor: "#7c3aed", borderRadius: 8 }}
+                  itemStyle={{ color: "#fff" }}
+                  formatter={(value: number) => [`${value} vendas`, "Vendas"]}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="vendas"
+                  stroke="url(#lineGradient)"
+                  strokeWidth={4}
+                  dot={{
+                    r: 6,
+                    stroke: "#7c3aed",
+                    strokeWidth: 2,
+                    fill: "white",
+                  }}
+                  animationDuration={1000}
+                />
+                <defs>
+                  <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#a78bfa" />
+                    <stop offset="100%" stopColor="#7c3aed" />
+                  </linearGradient>
+                </defs>
+              </ReLineChart>
+            </ResponsiveContainer>
+          </Surface>
+
+          {/* Gráfico 2 - Usuários Mensais (Barras Roxas com Gradiente) */}
+          <Surface className="bg-gradient-to-r from-purple-50 to-purple-100 p-6 rounded-lg">
+            <Title className="text-purple-800 mb-2">Usuários Mensais</Title>
+            <ResponsiveContainer width="100%" height={320}>
+              <ReBarChart
+                data={[
+                  { month: "Jan", usuarios: 200 },
+                  { month: "Feb", usuarios: 300 },
+                  { month: "Mar", usuarios: 150 },
+                  { month: "Apr", usuarios: 250 },
+                ]}
+                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <ReTooltip
+                  contentStyle={{ backgroundColor: "#7c3aed", borderRadius: 8 }}
+                  itemStyle={{ color: "#fff" }}
+                  formatter={(value: number) => [
+                    `${value} usuários`,
+                    "Usuários",
+                  ]}
+                />
+                <defs>
+                  <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#7c3aed" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#a78bfa" stopOpacity={1} />
+                  </linearGradient>
+                </defs>
+                <Bar
+                  dataKey="usuarios"
+                  fill="url(#barGradient)"
+                  radius={[6, 6, 0, 0]}
+                  animationDuration={1200}
+                />
+              </ReBarChart>
+            </ResponsiveContainer>
+          </Surface>
+        </div>
+
         <Surface>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Zap className="w-5 h-5 text-blue-600" />
               <h3 className="font-semibold">Ações Rápidas</h3>
             </div>
-            
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

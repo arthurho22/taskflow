@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { TaskService } from "@/services/taskService";
+import { toast } from "sonner";
 import type { Task } from "@/types/task";
 import { Loader2, ListTodo, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -56,14 +57,24 @@ export default function KanbanPage() {
     }
   };
 
+  const [alertActive, setAlertActive] = useState(false);
+
   const handleCreateTask = async () => {
-    if (!newTask.title.trim()) return alert("Digite um título para a tarefa.");
+    if (!newTask.title.trim()) {
+      if (!alertActive) {
+        setAlertActive(true);
+        alert("Digite um título para a tarefa.");
+        setAlertActive(false);
+      }
+      return;
+    }
+
     try {
       await TaskService.createTask(user!.uid, {
         title: newTask.title,
         description: newTask.description,
         status: newTask.status as any,
-        priority: "media", // ✅ prioridade padrão
+        priority: "media",
       });
       setShowModal(false);
       setNewTask({ title: "", description: "", status: "todo" });
@@ -169,12 +180,17 @@ export default function KanbanPage() {
                                       ) {
                                         try {
                                           await TaskService.deleteTask(task.id);
+                                          toast.success(
+                                            "Tarefa deletada com sucesso! 🗑️"
+                                          );
                                         } catch (err) {
                                           console.error(
                                             "Erro ao deletar tarefa:",
                                             err
                                           );
-                                          alert("Erro ao deletar tarefa.");
+                                          toast.error(
+                                            "Erro ao deletar tarefa 😢"
+                                          );
                                         }
                                       }
                                     }}

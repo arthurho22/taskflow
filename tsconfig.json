@@ -43,7 +43,7 @@
     "**/*.d.ts",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
-  ],
+, "src/components/DashboardGraphs.jsx"  ],
   "exclude": [
     "node_modules"
   ]
